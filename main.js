@@ -146,6 +146,34 @@ const AROptimizer = {
   }
 };
 
+AFRAME.registerComponent('target-handler', {
+  init: function () {
+    const mindarScene = this.el.sceneEl;
+
+    // Handle target found
+    this.el.addEventListener('targetFound', () => {
+      console.log(`Target found for ID: ${this.el.getAttribute('data-id')}`);
+
+      // Handle <a-gltf-model>
+      const gltfElement = this.el.querySelector('a-gltf-model');
+      if (gltfElement) {
+        gltfElement.setAttribute('visible', 'true');
+      }
+    });
+
+    // Handle target lost
+    this.el.addEventListener('targetLost', () => {
+      console.log(`Target lost for ID: ${this.el.getAttribute('data-id')}`);
+
+      // Handle <a-gltf-model>
+      const gltfElement = this.el.querySelector('a-gltf-model');
+      if (gltfElement) {
+        gltfElement.setAttribute('visible', 'false');
+      }
+    });
+  }
+});
+
 // Register video material component
 AFRAME.registerComponent('video-material', {
   schema: {

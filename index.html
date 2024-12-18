@@ -133,7 +133,7 @@
 
       <!-- MY CODE -->
 
-      <a-entity video-material="video: #vid1" mindar-image-target="targetIndex: 0">
+      <!-- <a-entity video-material="video: #vid1" mindar-image-target="targetIndex: 0">
         <a-video
           crossorigin="anonymous"
           id="videoEntity"
@@ -143,12 +143,23 @@
           rotation="0 0 0"
           visible="false"
         ></a-video>
+      </a-entity> -->
+
+      <a-entity mindartarget data-id="001" mindar-image-target="targetIndex: 0">
+        <a-gltf-model crossorigin="anonymous" rotation="0 0 0" position="0 0 0" src="https://cdn.jsdelivr.net/gh/OsyaLdn/ar-scan-storage@master/001/001.gltf"></a-gltf-model>
       </a-entity>
 
-      <!-- <a-entity mindartarget data-id="001" mindar-image-target="targetIndex: 0">
-        <a-gltf-model crossOrigin="anonymous" rotation="0 0 0" position="0 0 0" src="#001"></a-gltf-model>
-      </a-entity>
-      <a-entity mindartarget data-id="002" mindar-image-target="targetIndex: 1">
+      <!-- <a-entity mindartarget data-id="001" mindar-image-target="targetIndex: 0" target-handler>
+        <a-gltf-model
+          crossOrigin="anonymous"
+          rotation="0 0 0"
+          position="0 0 0"
+          src="#001"
+          visible="false"
+        ></a-gltf-model>
+      </a-entity> -->
+
+      <!-- <a-entity mindartarget data-id="002" mindar-image-target="targetIndex: 1">
         <a-gltf-model crossOrigin="anonymous" rotation="0 0 0" position="0 0 0" src="#002"></a-gltf-model>
       </a-entity>
       
