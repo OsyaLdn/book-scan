@@ -25,11 +25,13 @@ function performCleanup(fullCleanup = false) {
     
     // Clean up WebGL textures
     const textures = scene.renderer.info.memory.textures || [];
-    textures.forEach(texture => {
-      if (texture && texture.dispose) {
-        texture.dispose();
-      }
-    });
+    if (Array.isArray(textures)) {
+      textures.forEach(texture => {
+        if (texture && texture.dispose) {
+          texture.dispose();
+        }
+      });
+    }
 
     // Clean up WebGL buffers
     if (gl) {
@@ -151,60 +153,49 @@ AFRAME.registerComponent('video-material', {
   },
 
   init: function () {
-    const mesh = this.el.getObject3D('mesh');
-    const video = this.data.video;
-    debugger;
+    const video = document.querySelector('#vid1');
+    const videoEntity = document.querySelector('#videoEntity');
 
-    const vertexShader = `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `;
+    const mindarScene = this.el;
 
-    const fragmentShader = `
-      varying vec2 vUv;
-      uniform sampler2D videoTexture;
-      
-      void main() {
-        vec4 color = texture2D(videoTexture, vUv);
-        float dx = min(vUv.x, 1.0 - vUv.x);
-        float dy = min(vUv.y, 1.0 - vUv.y);
-        float edgeDistance = min(dx, dy);
-        float fadeWidth = 0.15;
-        float opacity = smoothstep(0.0, fadeWidth, edgeDistance);
-        float globalOpacity = 0.8;
-        gl_FragColor = vec4(color.rgb, color.a * opacity * globalOpacity);
-      }
-    `;
+    if (!video || !videoEntity) {
+      console.error('Video or video entity is missing');
+      return;
+    }
 
-    const videoTexture = new THREE.VideoTexture(video);
-    videoTexture.magFilter = THREE.LinearFilter;
-    videoTexture.format = THREE.RGBAFormat;
+    // Set up Three.js video texture
+    video.addEventListener('play', () => {
+      const videoTexture = new THREE.VideoTexture(video);
+      videoTexture.magFilter = THREE.LinearFilter;
+      videoTexture.format = THREE.RGBAFormat; // Ensure the format matches the video content
+      videoTexture.generateMipmaps = false;
 
-    const material = new THREE.ShaderMaterial({
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
-      uniforms: {
-        videoTexture: { value: videoTexture }
-      },
-      transparent: true,
-      alphaTest: 0.01
-    });
-
-    mesh.material = material;
-
-    // Enhanced cleanup on component removal
-    this.el.addEventListener('componentremoved', (evt) => {
-      if (evt.detail.name === 'video-material') {
-        if (material.uniforms.videoTexture.value) {
-          material.uniforms.videoTexture.value.dispose();
-        }
-        material.dispose();
+      const material = new THREE.MeshBasicMaterial({ map: videoTexture });
+      const mesh = videoEntity.getObject3D('mesh');
+      debugger
+      if (mesh) {
+        mesh.material = material;
+      } else {
+        console.warn('Mesh not found on video entity');
       }
     });
-  }
+
+    // Handle target found
+    mindarScene.addEventListener('targetFound', () => {
+      console.log('Target found!');
+      videoEntity.setAttribute('visible', 'true');
+      video.play().catch((error) => {
+        console.warn('Video playback failed:', error);
+      });
+    });
+
+    // Handle target lost
+    mindarScene.addEventListener('targetLost', () => {
+      console.log('Target lost!');
+      videoEntity.setAttribute('visible', 'false');
+      video.pause();
+    });
+  },
 });
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -220,18 +211,18 @@ document.addEventListener('DOMContentLoaded', function() {
   scene.object3D.background = null;
 
   // Initialize video elements
-  const videos = [
-    document.getElementById('vid1'),
-  ];
+  // const videos = [
+  //   document.getElementById('vid1'),
+  // ];
 
-  const targets = videos.map((video, i) => ({
-    video: video,
-    entity: document.querySelector(`a-entity[mindar-image-target="targetIndex: ${i}"]`),
-    plane: document.querySelector(`a-entity[mindar-image-target="targetIndex: ${i}"] a-plane`),
-    loaded: false
-  }));
+  // const targets = videos.map((video, i) => ({
+  //   video: video, // Source of the video
+  //   entity: document.querySelector(`a-entity[mindar-image-target="targetIndex: ${i}"]`),
+  //   videoElement: document.querySelector(`a-entity[mindar-image-target="targetIndex: ${i}"] a-video`),
+  //   loaded: false
+  // }));
 
-  let currentTarget = null;
+  // let currentTarget = null;
 
   // Initialize AR Optimizer
   AROptimizer.initialize();
@@ -257,104 +248,103 @@ document.addEventListener('DOMContentLoaded', function() {
         arScene.classList.add('ready');
       });
 
-      function pauseAllVideosExcept(activeVideo) {
-        videos.forEach(video => {
-          if (video && video !== activeVideo) {
-            video.pause();
-            video.currentTime = 0;
-          }
-        });
-      }
-
-      const playButton = document.getElementById('playButton');
+      // function pauseAllVideosExcept(activeVideo) {
+      //   videos.forEach(video => {
+      //     if (video && video !== activeVideo) {
+      //       video.pause();
+      //       video.currentTime = 0;
+      //     }
+      //   });
+      // }
 
       // Enhanced play button handler with error recovery
-      playButton.addEventListener('click', () => {
-        if (currentTarget && currentTarget.video) {
-          const startPlayback = async () => {
-            currentTarget.plane.setAttribute('visible', true);
-            playButton.style.display = 'none';
-            try {
-              await currentTarget.video.play();
-            } catch (err) {
-              console.warn('Playback failed, retrying:', err);
-              setTimeout(async () => {
-                try {
-                  await currentTarget.video.play();
-                } catch (error) {
-                  console.error('Retry failed:', error);
-                  playButton.style.display = 'flex';
-                  currentTarget.plane.setAttribute('visible', false);
-                }
-              }, 100);
-            }
-          };
-          startPlayback();
-        }
-      });
+      // playButton.addEventListener('click', () => {
+      //   if (currentTarget && currentTarget.video) {
+      //     const startPlayback = async () => {
+      //       currentTarget.videoElement.setAttribute('visible', true);
+      //       playButton.style.display = 'none';
+      //       try {
+      //         await currentTarget.video.play();
+      //       } catch (err) {
+      //         console.warn('Playback failed, retrying:', err);
+      //         setTimeout(async () => {
+      //           try {
+      //             await currentTarget.video.play();
+      //           } catch (error) {
+      //             console.error('Retry failed:', error);
+      //             playButton.style.display = 'flex';
+      //             currentTarget.videoElement.setAttribute('visible', false);
+      //           }
+      //         }, 100);
+      //       }
+      //     };
+      //     startPlayback();
+      //   }
+      // });
 
       // Enhanced target handling with cleanup
-      targets.forEach(target => {
-        if (!target.video) return;
+      // targets.forEach(target => {
+      //   if (!target.video) return;
 
-        target.entity.addEventListener('targetFound', () => {
-          if (currentTarget && currentTarget !== target) {
-            currentTarget.video.pause();
-            currentTarget.video.currentTime = 0;
-            currentTarget.plane.setAttribute('visible', false);
-          }
+      //   target.entity.addEventListener('targetFound', () => {
+      //     if (currentTarget && currentTarget !== target) {
+      //       currentTarget.video.pause();
+      //       currentTarget.video.currentTime = 0;
+      //       currentTarget.videoElement.setAttribute('visible', false);
+      //     }
           
-          currentTarget = target;
-          target.video.currentTime = 0;
-          pauseAllVideosExcept(target.video);
-          target.plane.setAttribute('visible', false);
-          playButton.style.display = 'flex';
-        });
+      //     currentTarget = target;
+      //     target.video.currentTime = 0;
+      //     pauseAllVideosExcept(target.video);
+      //     target.videoElement.setAttribute('visible', false);
+      //     target.video.play();
+      //     playButton.style.display = 'flex';
+      //   });
 
-        target.entity.addEventListener('targetLost', () => {
-          if (currentTarget === target) {
-            target.video.pause();
-            target.video.currentTime = 0;
-            playButton.style.display = 'none';
-            target.plane.setAttribute('visible', false);
-            currentTarget = null;
-          }
-        });
+      //   target.entity.addEventListener('targetLost', () => {
+      //     if (currentTarget === target) {
+      //       target.video.pause();
+      //       target.video.currentTime = 0;
+      //       playButton.style.display = 'none';
+      //       target.videoElement.setAttribute('visible', false);
+      //       currentTarget = null;
+      //     }
+      //   });
 
-        // Enhanced video event handlers
-        target.video.addEventListener('play', () => {
-          pauseAllVideosExcept(target.video);
-        });
+      //   // Enhanced video event handlers
+      //   target.video.addEventListener('play', () => {
+      //     pauseAllVideosExcept(target.video);
+      //   });
 
-        target.video.addEventListener('ended', () => {
-          if (target.video.loop) {
-            target.video.currentTime = 0;
-            target.video.play().catch(() => {
-              playButton.style.display = 'flex';
-            });
-          }
-        });
+      //   target.video.addEventListener('ended', () => {
+      //     if (target.video.loop) {
+      //       target.video.currentTime = 0;
+      //       target.video.play().catch(() => {
+      //         playButton.style.display = 'flex';
+      //       });
+      //     }
+      //   });
 
-        target.video.addEventListener('error', () => {
-          console.warn('Video error, attempting recovery');
-          if (currentTarget === target) {
-            playButton.style.display = 'none';
-            target.plane.setAttribute('visible', false);
-          }
-          const currentSrc = target.video.src;
-          target.video.src = '';
-          target.video.load();
-          target.video.src = currentSrc;
-        });
+      //   target.video.addEventListener('error', () => {
+      //     console.warn('Video error, attempting recovery');
+      //     if (currentTarget === target) {
+      //       // playButton.style.display = 'none';
+      //       target.videoElement.setAttribute('visible', false);
+      //     }
+      //     const currentSrc = target.video.src;
+      //     target.video.src = '';
+      //     target.video.load();
+      //     target.video.src = currentSrc;
+      //   });
 
-        target.video.muted = false;
-      });
+      //   target.video.muted = false;
+      // });
     })
     .catch(function(err) {
       console.error('Camera initialization error:', err);
       loadingProgress.textContent = 'Camera permission denied';
     });
-  }, 2000);
+  }, 0);
 });
 
 // Enhanced visibility change handling
@@ -367,3 +357,5 @@ document.addEventListener('visibilitychange', () => {
 // Additional cleanup handlers
 window.addEventListener('beforeunload', () => performCleanup(true));
 window.addEventListener('pagehide', () => performCleanup(true));
+
+// document.querySelector('a-scene').setAttribute('video-material', '');
