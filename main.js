@@ -200,7 +200,6 @@ AFRAME.registerComponent('video-material', {
 
       const material = new THREE.MeshBasicMaterial({ map: videoTexture });
       const mesh = videoEntity.getObject3D('mesh');
-      debugger
       if (mesh) {
         mesh.material = material;
       } else {
@@ -238,26 +237,12 @@ document.addEventListener('DOMContentLoaded', function() {
   scene.renderer.setClearColor(0x000000, 0);
   scene.object3D.background = null;
 
-  // Initialize video elements
-  // const videos = [
-  //   document.getElementById('vid1'),
-  // ];
-
-  // const targets = videos.map((video, i) => ({
-  //   video: video, // Source of the video
-  //   entity: document.querySelector(`a-entity[mindar-image-target="targetIndex: ${i}"]`),
-  //   videoElement: document.querySelector(`a-entity[mindar-image-target="targetIndex: ${i}"] a-video`),
-  //   loaded: false
-  // }));
-
-  // let currentTarget = null;
-
   // Initialize AR Optimizer
   AROptimizer.initialize();
 
   // Camera initialization with enhanced error handling
   setTimeout(() => {
-    loadingProgress.textContent = 'Starting camera...';
+    loadingProgress.textContent = 'Запуск камери...';
     
     navigator.mediaDevices.getUserMedia({ 
       video: {
@@ -275,102 +260,10 @@ document.addEventListener('DOMContentLoaded', function() {
         loadingProgress.style.display = 'none';
         arScene.classList.add('ready');
       });
-
-      // function pauseAllVideosExcept(activeVideo) {
-      //   videos.forEach(video => {
-      //     if (video && video !== activeVideo) {
-      //       video.pause();
-      //       video.currentTime = 0;
-      //     }
-      //   });
-      // }
-
-      // Enhanced play button handler with error recovery
-      // playButton.addEventListener('click', () => {
-      //   if (currentTarget && currentTarget.video) {
-      //     const startPlayback = async () => {
-      //       currentTarget.videoElement.setAttribute('visible', true);
-      //       playButton.style.display = 'none';
-      //       try {
-      //         await currentTarget.video.play();
-      //       } catch (err) {
-      //         console.warn('Playback failed, retrying:', err);
-      //         setTimeout(async () => {
-      //           try {
-      //             await currentTarget.video.play();
-      //           } catch (error) {
-      //             console.error('Retry failed:', error);
-      //             playButton.style.display = 'flex';
-      //             currentTarget.videoElement.setAttribute('visible', false);
-      //           }
-      //         }, 100);
-      //       }
-      //     };
-      //     startPlayback();
-      //   }
-      // });
-
-      // Enhanced target handling with cleanup
-      // targets.forEach(target => {
-      //   if (!target.video) return;
-
-      //   target.entity.addEventListener('targetFound', () => {
-      //     if (currentTarget && currentTarget !== target) {
-      //       currentTarget.video.pause();
-      //       currentTarget.video.currentTime = 0;
-      //       currentTarget.videoElement.setAttribute('visible', false);
-      //     }
-          
-      //     currentTarget = target;
-      //     target.video.currentTime = 0;
-      //     pauseAllVideosExcept(target.video);
-      //     target.videoElement.setAttribute('visible', false);
-      //     target.video.play();
-      //     playButton.style.display = 'flex';
-      //   });
-
-      //   target.entity.addEventListener('targetLost', () => {
-      //     if (currentTarget === target) {
-      //       target.video.pause();
-      //       target.video.currentTime = 0;
-      //       playButton.style.display = 'none';
-      //       target.videoElement.setAttribute('visible', false);
-      //       currentTarget = null;
-      //     }
-      //   });
-
-      //   // Enhanced video event handlers
-      //   target.video.addEventListener('play', () => {
-      //     pauseAllVideosExcept(target.video);
-      //   });
-
-      //   target.video.addEventListener('ended', () => {
-      //     if (target.video.loop) {
-      //       target.video.currentTime = 0;
-      //       target.video.play().catch(() => {
-      //         playButton.style.display = 'flex';
-      //       });
-      //     }
-      //   });
-
-      //   target.video.addEventListener('error', () => {
-      //     console.warn('Video error, attempting recovery');
-      //     if (currentTarget === target) {
-      //       // playButton.style.display = 'none';
-      //       target.videoElement.setAttribute('visible', false);
-      //     }
-      //     const currentSrc = target.video.src;
-      //     target.video.src = '';
-      //     target.video.load();
-      //     target.video.src = currentSrc;
-      //   });
-
-      //   target.video.muted = false;
-      // });
     })
     .catch(function(err) {
       console.error('Camera initialization error:', err);
-      loadingProgress.textContent = 'Camera permission denied';
+      loadingProgress.textContent = 'Відмовлено в дозволі на камеру';
     });
   }, 0);
 });
@@ -385,5 +278,3 @@ document.addEventListener('visibilitychange', () => {
 // Additional cleanup handlers
 window.addEventListener('beforeunload', () => performCleanup(true));
 window.addEventListener('pagehide', () => performCleanup(true));
-
-// document.querySelector('a-scene').setAttribute('video-material', '');
